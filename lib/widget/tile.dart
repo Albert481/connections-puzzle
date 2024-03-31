@@ -15,6 +15,7 @@ class Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return GestureDetector(
       onTap: () {
         onTap();
@@ -26,7 +27,7 @@ class Tile extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -36,7 +37,7 @@ class Tile extends StatelessWidget {
                 word,
                 style: GoogleFonts.roboto(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),

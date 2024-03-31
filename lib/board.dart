@@ -1,8 +1,10 @@
 import 'dart:math';
 
+import 'package:connections/widget/tile4.dart';
 import 'package:connections/widget/word.dart';
 import 'package:flutter/material.dart';
 import 'package:connections/widget/grid.dart';
+import 'package:connections/widget/tile4.dart';
 import 'package:connections/widget/imageWidget.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,6 +19,7 @@ class board extends StatefulWidget {
 class _boardState extends State<board> {
   List<String> words = [];
   List<WordSet> wordsets = [];
+  List<WordSet> correctWordSets = [];
   int noOfMoves = 4;
   List<int> selectedWordIndices = [];
   String errorMsg = "";
@@ -26,15 +29,25 @@ class _boardState extends State<board> {
   void initState() {
     super.initState();
     initWords();
-    words.shuffle();
+    // words.shuffle();
   }
 
   List<String> initWords() {
     words = [];
     wordsets = WordSet.get4WordSets();
+
+    // Ensure that there are exactly 4 unique category titles
+    Set<String> uniqueCategories = wordsets.map((e) => e.categoryTitle).toSet();
+    while (uniqueCategories.length != 4) {
+      wordsets = WordSet.get4WordSets();
+      uniqueCategories = wordsets.map((e) => e.categoryTitle).toSet();
+    }
+
+    // Add words from each WordSet to the words list
     for (WordSet wordSet in wordsets) {
       words.addAll(wordSet.word);
     }
+
     return words;
   }
 
@@ -48,10 +61,28 @@ class _boardState extends State<board> {
               "Connections Puzzle",
               style: GoogleFonts.roboto(
                 color: Colors.black,
-                fontSize: 50,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             )
+          ),
+          // on correct answer, the correct words will be removed from the grid and the category will be displayed as a row (4 tiles) above the grid
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Column(
+                  children: [
+                    for (WordSet wordSet in correctWordSets)
+                      Tile4(
+                        categoryTitle: wordSet.categoryTitle,
+                        words: wordSet.word,
+                        difficulty: wordSet.difficulty,
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
           Center(
             child: 
@@ -167,10 +198,10 @@ class _boardState extends State<board> {
       }
 
       if (maxCount == 4) {
-        String category = getCategory(selectedWordsSet[0]); // Assuming all selected words belong to the same category
+        String category = getCategory(selectedWordsSet[0]);
         errorMsg = "Correct! Category: $category";
-        // Remove correct words from the list
         words.removeWhere((element) => selectedWordsSet.contains(element));
+        correctWordSets.add(wordsets.firstWhere((element) => element.word.contains(selectedWordsSet[0])));
         selectedWordIndices.clear();
       } else {
         errorMsg = maxCount == 3 ? "One word away!" : "Incorrect";
