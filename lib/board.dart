@@ -30,7 +30,7 @@ class _boardState extends State<board> {
   void initState() {
     super.initState();
     initWords();
-    words.shuffle();
+    // words.shuffle();
     isGameOver = false;
   }
 
@@ -218,23 +218,6 @@ From Easy to Hard: Yellow, Green, Blue, Purple
 
   void onSubmit() {
     setState(() {
-      if (words.isEmpty) {
-        gameOver();
-      }
-
-      if (noOfMoves <= 1) {
-        gameOver();
-        errorMsg = "Game over! These are the correct words";
-        noOfMoves = 0;
-        selectedWordIndices.clear();
-        words = [];
-        for (WordSet wordSet in wordsets) {
-          words.addAll(wordSet.word);
-        }
-
-        return;
-      }
-
       // Extract selected words from indices
       List<String> selectedWordsSet = selectedWordIndices.map((index) => words[index]).toList();
 
@@ -270,6 +253,23 @@ From Easy to Hard: Yellow, Green, Blue, Purple
         errorMsg = maxCount == 3 ? "One word away!" : "Incorrect";
         attemptedCombinations.add(Set.from(selectedWordsSet));
         noOfMoves--;
+      }
+
+      if (words.isEmpty) {
+        gameOver();
+      }
+
+      if (noOfMoves < 1) {
+        gameOver();
+        errorMsg = "Game over! These are the correct words";
+        noOfMoves = 0;
+        selectedWordIndices.clear();
+        words = [];
+        for (WordSet wordSet in wordsets) {
+          words.addAll(wordSet.word);
+        }
+
+        return;
       }
     });
   }
