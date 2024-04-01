@@ -17,6 +17,7 @@ class board extends StatefulWidget {
 }
 
 class _boardState extends State<board> {
+  bool isGameOver = false;
   List<String> words = [];
   List<WordSet> wordsets = [];
   List<WordSet> correctWordSets = [];
@@ -29,7 +30,8 @@ class _boardState extends State<board> {
   void initState() {
     super.initState();
     initWords();
-    // words.shuffle();
+    words.shuffle();
+    isGameOver = false;
   }
 
   List<String> initWords() {
@@ -66,7 +68,46 @@ class _boardState extends State<board> {
               ),
             )
           ),
-          // on correct answer, the correct words will be removed from the grid and the category will be displayed as a row (4 tiles) above the grid
+          // add help icon which will show a modal with help text
+          IconButton(
+            icon: Icon(Icons.help),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('HOW TO PLAY'),
+                    content: Text('''
+Find groups of four items that share something in common.
+
+Select four items and tap 'Submit' to check if your guess is correct.
+
+Find the groups without making 4 mistakes!
+
+Category Examples
+FISH: Bass, Flounder, Salmon, Trout
+FIRE ___: Ant, Drill, Island, Opal
+
+Categories will always be more specific than "5-LETTER-WORDS," "NAMES" or "VERBS."
+
+Each puzzle has exactly one solution. Watch out for words that seem to belong to multiple categories!
+
+Each group is assigned a color, which will be revealed as you solve:
+From Easy to Hard: Yellow, Green, Blue, Purple
+                    '''),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('Close'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
           Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -102,21 +143,40 @@ class _boardState extends State<board> {
             ),
           )),
           Center(
-            child: Row(
+           child: isGameOver
+        ? ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: playAgain,
+            child: Text("Play Again"),
+          )
+          : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: onSubmit,
-                  child: Text("Submit"),
-                ),
+                Center(
+                  child: selectedWordIndices.length == 4
+                      ? ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: onSubmit,
+                        child: Text("Submit"),
+                      )
+                      : ElevatedButton(onPressed: null, child: Text("Submit")),
+                )
+                ,
                 SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: deselectAll,
-                  child: Text("Deselect All"),
+                Center(
+                  child: selectedWordIndices.isNotEmpty
+                      ? ElevatedButton(
+                          onPressed: deselectAll,
+                          child: Text("Deselect All"),
+                        )
+                      : ElevatedButton(onPressed: null, child: Text("Deselect All")
+                      ),
                 ),
                 SizedBox(width: 16),
                 ElevatedButton(
@@ -158,9 +218,14 @@ class _boardState extends State<board> {
 
   void onSubmit() {
     setState(() {
-      if (noOfMoves == 0) {
+      if (words.isEmpty) {
+        gameOver();
+      }
+
+      if (noOfMoves <= 1) {
+        gameOver();
         errorMsg = "Game over! These are the correct words";
-        // show all the words with category in the grid
+        noOfMoves = 0;
         selectedWordIndices.clear();
         words = [];
         for (WordSet wordSet in wordsets) {
@@ -170,18 +235,13 @@ class _boardState extends State<board> {
         return;
       }
 
-      if (selectedWordIndices.length != 4) {
-        errorMsg = "Please select 4 words";
-        return;
-      }
-
       // Extract selected words from indices
       List<String> selectedWordsSet = selectedWordIndices.map((index) => words[index]).toList();
 
       if (attemptedCombinations.any((set) =>
           set.length == selectedWordsSet.length &&
           set.containsAll(selectedWordsSet))) {
-        errorMsg = "This combination has already been tried!";
+        errorMsg = "You have already attempted this combination!";
         return;
       }
 
@@ -203,6 +263,9 @@ class _boardState extends State<board> {
         words.removeWhere((element) => selectedWordsSet.contains(element));
         correctWordSets.add(wordsets.firstWhere((element) => element.word.contains(selectedWordsSet[0])));
         selectedWordIndices.clear();
+        if (words.isEmpty) {
+          gameOver();
+        }
       } else {
         errorMsg = maxCount == 3 ? "One word away!" : "Incorrect";
         attemptedCombinations.add(Set.from(selectedWordsSet));
@@ -217,13 +280,16 @@ class _boardState extends State<board> {
     });
   }
 
-  void newGame() {
+  void playAgain() {
     setState(() {
+      isGameOver = false;
       noOfMoves = 4;
+      correctWordSets.clear();
       selectedWordIndices.clear();
       attemptedCombinations.clear();
       errorMsg = "";
       words = initWords();
+      words.shuffle();
     });
   }
 
@@ -257,5 +323,13 @@ class _boardState extends State<board> {
       }
     }
     return "";
+  }
+
+  void gameOver() {
+    setState(() {
+      isGameOver = true;
+      selectedWordIndices.clear();
+      words = [];
+    });
   }
 }

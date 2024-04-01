@@ -22,7 +22,7 @@ class Tile extends StatelessWidget {
       },
       child: Card(
         elevation: 10,
-        color: isSelected ? Colors.blueGrey : Colors.blue,
+        color: isSelected ? Colors.brown[900] : Colors.brown[200],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
